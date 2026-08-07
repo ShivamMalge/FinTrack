@@ -56,6 +56,21 @@ export const getTransactions = async (userId: string, query: z.infer<typeof quer
   });
 };
 
+export const getTransactionsForExport = async (userId: string, query: z.infer<typeof queryTransactionSchema>) => {
+  const where: any = { userId };
+
+  if (query.startDate) where.date = { ...where.date, gte: new Date(query.startDate) };
+  if (query.endDate) where.date = { ...where.date, lte: new Date(query.endDate) };
+  if (query.type) where.type = query.type;
+  if (query.categoryId) where.categoryId = query.categoryId;
+
+  return await prisma.transaction.findMany({
+    where,
+    orderBy: { date: 'desc' },
+    include: { category: true }
+  });
+};
+
 export const getTransactionById = async (userId: string, transactionId: string) => {
   const tx = await prisma.transaction.findUnique({
     where: { id: transactionId },
