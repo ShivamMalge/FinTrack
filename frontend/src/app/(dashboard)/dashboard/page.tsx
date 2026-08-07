@@ -10,26 +10,33 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Loader2, Receipt, Trash2, FileSpreadsheet, FileDown } from 'lucide-react';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({ amount: '', type: 'EXPENSE', categoryId: '', note: '', date: new Date().toISOString().split('T')[0] });
 
-  const { data: summary } = useQuery({
+  const { data: summary, isLoading: isSummaryLoading } = useQuery({
     queryKey: ['summary'],
     queryFn: async () => (await api.get('/summary')).data.data
   });
 
-  const { data: txs = [] } = useQuery({
+  const { data: txs = [], isLoading: isTxsLoading } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => (await api.get('/transactions')).data.data
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => (await api.get('/categories')).data.data
   });
+
+  const isLoading = isSummaryLoading || isTxsLoading || isCategoriesLoading;
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -40,6 +47,10 @@ export default function DashboardPage() {
       queryClient.invalidateQueries({ queryKey: ['summary'] });
       setIsOpen(false);
       setFormData({ amount: '', type: 'EXPENSE', categoryId: '', note: '', date: new Date().toISOString().split('T')[0] });
+      toast.success('Transaction added successfully');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error?.message || 'Failed to add transaction');
     }
   });
 
@@ -48,17 +59,42 @@ export default function DashboardPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['summary'] });
+      toast.success('Transaction deleted');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error?.message || 'Failed to delete transaction');
     }
   });
 
   const filteredCategories = categories.filter((c: any) => c.type === formData.type);
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-48" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+        <Card>
+          <div className="p-4 space-y-4">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="space-x-2">
-          <Button variant="outline" onClick={() => window.location.href='/api/transactions/export?format=csv'}>Export CSV</Button>
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => setIsOpen(true)}>Add Transaction</Button>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent>
@@ -102,7 +138,8 @@ export default function DashboardPage() {
                   <Input value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} />
                 </div>
                 <Button type="submit" className="w-full" disabled={createMutation.isPending || !formData.categoryId}>
-                  Save Transaction
+                  {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {createMutation.isPending ? 'Saving...' : 'Save Transaction'}
                 </Button>
               </form>
             </DialogContent>
@@ -125,8 +162,9 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <Card>
-        <Table>
+      <div className="hidden md:block">
+        <Card>
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
@@ -146,13 +184,51 @@ export default function DashboardPage() {
                   {tx.type === 'INCOME' ? '+' : '-'}${tx.amount}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(tx.id)}>Delete</Button>
+                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(tx.id)} disabled={deleteMutation.isPending}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
+            {txs.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="py-8">
+                  <EmptyState icon={Receipt} title="No transactions" description="Add your first transaction." />
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
-      </Card>
+        </Card>
+      </div>
+
+      {/* Mobile view */}
+      <div className="md:hidden space-y-4">
+        {txs.map((tx: any) => (
+          <Card key={tx.id} className="p-4 flex flex-col space-y-2">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="font-medium">{tx.category?.name}</div>
+                <div className="text-xs text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</div>
+              </div>
+              <div className={`font-bold ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
+                {tx.type === 'INCOME' ? '+' : '-'}${tx.amount}
+              </div>
+            </div>
+            {tx.note && <div className="text-sm text-gray-500">{tx.note}</div>}
+            <div className="flex justify-end pt-2 border-t mt-2">
+               <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(tx.id)} disabled={deleteMutation.isPending}>
+                 <Trash2 className="h-4 w-4 mr-2" /> Delete
+               </Button>
+            </div>
+          </Card>
+        ))}
+        {txs.length === 0 && (
+           <Card className="p-4">
+             <EmptyState icon={Receipt} title="No transactions" description="Add your first transaction." />
+           </Card>
+        )}
+      </div>
     </div>
   );
 }

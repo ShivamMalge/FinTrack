@@ -11,12 +11,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FolderOpen, Loader2, Trash2 } from 'lucide-react';
 
 export default function CategoriesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', type: 'EXPENSE' });
+
+  console.log('--- CATEGORIES PAGE USER LOG ---');
+  console.log(JSON.stringify(user, null, 2));
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
@@ -34,6 +41,10 @@ export default function CategoriesPage() {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setIsOpen(false);
       setFormData({ name: '', type: 'EXPENSE' });
+      toast.success('Category created successfully');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error?.message || 'Failed to create category');
     }
   });
 
@@ -41,10 +52,32 @@ export default function CategoriesPage() {
     mutationFn: async (id: string) => {
       await api.delete(`/categories/${id}`);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success('Category deleted successfully');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error?.message || 'Failed to delete category');
+    }
   });
 
-  if (isLoading) return <div>Loading categories...</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-48" />
+        </div>
+        <Card>
+          <div className="p-4 space-y-4">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -78,6 +111,7 @@ export default function CategoriesPage() {
                   </Select>
                 </div>
                 <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+                  {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {createMutation.isPending ? 'Saving...' : 'Save Category'}
                 </Button>
               </form>
@@ -107,14 +141,22 @@ export default function CategoriesPage() {
                 </TableCell>
                 {user?.role === 'ADMIN' && (
                   <TableCell className="text-right">
-                    <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate(cat.id)}>Delete</Button>
+                    <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate(cat.id)} disabled={deleteMutation.isPending}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 )}
               </TableRow>
             ))}
             {categories.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-gray-500">No categories found.</TableCell>
+                <TableCell colSpan={3} className="py-8">
+                  <EmptyState 
+                    icon={FolderOpen} 
+                    title="No categories found" 
+                    description="Get started by creating a new category for your transactions." 
+                  />
+                </TableCell>
               </TableRow>
             )}
           </TableBody>

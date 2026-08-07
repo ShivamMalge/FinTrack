@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -31,9 +32,12 @@ export default function RegisterPage() {
     try {
       setError('');
       await api.post('/auth/register', values);
+      toast.success('Registration successful. Please log in.');
       router.push('/login');
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Registration failed');
+      const msg = err.response?.data?.error?.message || 'Registration failed';
+      setError(msg);
+      toast.error(msg);
     }
   }
 

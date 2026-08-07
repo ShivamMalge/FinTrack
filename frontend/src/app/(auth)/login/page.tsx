@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -30,9 +31,12 @@ export default function LoginPage() {
     try {
       setError('');
       await api.post('/auth/login', values);
+      toast.success('Logged in successfully');
       window.location.href = '/dashboard';
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Login failed');
+      const msg = err.response?.data?.error?.message || 'Login failed';
+      setError(msg);
+      toast.error(msg);
     }
   }
 
