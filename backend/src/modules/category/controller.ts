@@ -26,7 +26,7 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
 
 export const update = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const category = await updateCategory(req.params.id, req.body);
+    const category = await updateCategory(req.params.id as string, req.body);
     res.status(200).json(successResponse(category));
   } catch (error: any) {
     if (error.message === 'CONFLICT') {
@@ -41,7 +41,7 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
 
 export const remove = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await deleteCategory(req.params.id);
+    await deleteCategory(req.params.id as string);
     res.status(200).json(successResponse({ success: true }));
   } catch (error: any) {
     if (error.code === 'P2025') {

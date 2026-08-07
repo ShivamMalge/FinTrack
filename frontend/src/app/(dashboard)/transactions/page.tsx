@@ -69,7 +69,7 @@ export default function TransactionsPage() {
       <Card className="p-4 flex flex-col md:flex-row gap-4 items-end">
         <div className="w-full md:w-1/4">
           <Label>Type</Label>
-          <Select value={filters.type} onValueChange={(val) => setFilters(f => ({ ...f, type: val }))}>
+          <Select value={filters.type} onValueChange={(val) => { if (val) setFilters(f => ({ ...f, type: val })); }}>
             <SelectTrigger><SelectValue placeholder="All Types" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Types</SelectItem>
@@ -80,7 +80,7 @@ export default function TransactionsPage() {
         </div>
         <div className="w-full md:w-1/4">
           <Label>Category</Label>
-          <Select value={filters.categoryId} onValueChange={(val) => setFilters(f => ({ ...f, categoryId: val }))}>
+          <Select value={filters.categoryId} onValueChange={(val) => { if (val) setFilters(f => ({ ...f, categoryId: val })); }}>
             <SelectTrigger><SelectValue placeholder="All Categories" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Categories</SelectItem>
