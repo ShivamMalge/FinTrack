@@ -22,13 +22,13 @@ Monorepo with two top-level apps keeps Docker Compose simple; a full workspace t
 DATABASE_URL=postgresql://postgres:postgres@db:5432/finance_tracker
 JWT_SECRET=<generate a long random string>
 JWT_EXPIRES_IN=15m
-PORT=4000
+PORT=4001
 FRONTEND_ORIGIN=http://localhost:3000
 ```
 
 **frontend/.env.local**
 ```
-NEXT_PUBLIC_API_URL=http://localhost:4000/api
+NEXT_PUBLIC_API_URL=http://localhost:4001/api
 ```
 
 ### 3. docker-compose.yml (outline)
@@ -53,7 +53,7 @@ services:
     depends_on:
       - db
     ports:
-      - "4000:4000"
+      - "4001:4001"
     command: sh -c "npx prisma migrate deploy && npx prisma db seed && node dist/server.js"
 
   frontend:
