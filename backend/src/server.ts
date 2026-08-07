@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './modules/auth/routes';
 import categoryRoutes from './modules/category/routes';
 import transactionRoutes from './modules/transaction/routes';
+import summaryRoutes from './modules/summary/routes';
 import { authenticate } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 const app = express();
@@ -23,6 +24,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', authenticate, categoryRoutes);
 app.use('/api/transactions', authenticate, transactionRoutes);
+app.use('/api/summary', authenticate, summaryRoutes);
 
 app.use(errorHandler);
 

@@ -7,9 +7,10 @@ export const validate = (schema: AnyZodObject) => {
     try {
       req.body = await schema.parseAsync(req.body);
       next();
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ZodError) {
-        return res.status(400).json(errorResponse('VALIDATION_ERROR', error.errors[0].message));
+        const message = error.issues?.[0]?.message || error.errors?.[0]?.message || 'Validation failed';
+        return res.status(400).json(errorResponse('VALIDATION_ERROR', message));
       }
       next(error);
     }
