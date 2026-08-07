@@ -4,6 +4,9 @@ import 'dotenv/config';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import authRoutes from './modules/auth/routes';
+import categoryRoutes from './modules/category/routes';
+import transactionRoutes from './modules/transaction/routes';
+import { authenticate } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 const app = express();
 const port = process.env.PORT || 4000;
@@ -18,7 +21,8 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 app.use('/api/auth', authRoutes);
-console.log('Registered auth routes. authRoutes type:', typeof authRoutes);
+app.use('/api/categories', authenticate, categoryRoutes);
+app.use('/api/transactions', authenticate, transactionRoutes);
 
 app.use(errorHandler);
 
