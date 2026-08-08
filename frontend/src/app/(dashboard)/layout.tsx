@@ -36,6 +36,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             Categories
           </Link>
+          {user.role === 'ADMIN' && (
+            <Link 
+              href="/users" 
+              className={`text-sm font-medium ${pathname === '/users' ? 'text-blue-600' : 'hover:text-blue-600'}`}
+            >
+              Users
+            </Link>
+          )}
           <div className="text-sm text-gray-500 hidden sm:block px-4 border-l border-gray-200 dark:border-gray-700">
             {user.name} ({user.role})
           </div>
