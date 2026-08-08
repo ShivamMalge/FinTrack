@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://fintrack-vvb5.onrender.com/api/:path*"
+    }
+  ]
+}
